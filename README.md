@@ -26,6 +26,7 @@ By leveraging **LightGBM** for high-accuracy predictions and **DiCE (Diverse Cou
 
 - **Interactive Predictor:** Real-time house price estimation using an optimized LightGBM model.
 - **Actionable Counterfactuals:** Generates 3 distinct feature adjustment paths to reach your desired price range.
+- **PDF Report Export:** Downloadable, fully-formatted PDF reports detailing English explanations of the counterfactual changes along with embedded SHAP charts.
 - **Realistic Constraints:** Geographic features (Latitude/Longitude) are completely locked. The app only recommends changes you can actually influence (like occupancy or renovations).
 - **Interpretable AI (SHAP):** Visualizes feature importance and interaction dependencies using SHAP (SHapley Additive exPlanations).
 - **Modern Dark UI:** A beautifully customized, two-phase Streamlit interface with a hero landing page, clear UI layout, and detailed information popovers.
@@ -41,6 +42,7 @@ By leveraging **LightGBM** for high-accuracy predictions and **DiCE (Diverse Cou
 | **Explainable AI** | DiCE (`dice-ml`), SHAP |
 | **Data Processing** | Pandas, Numpy |
 | **Data Visualization** | Matplotlib |
+| **PDF Generation** | `fpdf2` |
 
 ---
 
@@ -98,6 +100,7 @@ CFX/
 |   |-- data_loader.py      # Dataset fetching & preprocessing
 |   |-- model.py            # LightGBM configuration & training
 |   |-- explainer.py        # DiCE configuration & CF generation
+|   |-- pdf.py              # Export logic for PDF reports with figures
 |   `-- visualise.py        # SHAP & Delta Styler UI components
 `-- outputs/                # Generated artifacts
     |-- lgbm_model.pkl         # Serialized LightGBM Model
