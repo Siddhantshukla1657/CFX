@@ -221,6 +221,49 @@ def _render_feature_inputs(feature_bounds: dict) -> dict:
     return user_input
 
 
+def _generate_report(query_instance: pd.DataFrame, cfs: pd.DataFrame, prediction: float) -> str:
+    original = query_instance.iloc[0]
+    
+    report_lines = []
+    report_lines.append("# CFX - Counterfactual Explainer Report\n")
+    report_lines.append(f"**Original Predicted Price:** {format_usd_from_model_units(prediction)}\n")
+    
+    report_lines.append("## Original Property Details")
+    for col in FEATURE_COLUMNS:
+        meta = PARAMETER_HELP[col]
+        report_lines.append(f"- **{meta['label']}**: {original[col]:.2f} {meta['unit']}")
+    
+    report_lines.append("\n## Recommended Counterfactual Paths")
+    
+    for idx, row in cfs.iterrows():
+        path_name = row['Path']
+        predicted_price = row['PredictedPriceUSD']
+        report_lines.append(f"### {path_name}")
+        report_lines.append(f"To reach a predicted price of **{predicted_price}**, the following changes are recommended:\n")
+        
+        changes = []
+        for col in FEATURE_COLUMNS:
+            if col in ['Latitude', 'Longitude']:
+                continue
+            orig_val = original[col]
+            new_val = row[col]
+            
+            diff = new_val - orig_val
+            # Use small threshold for diff to avoid floating point issues
+            if abs(diff) > 1e-4:
+                direction = "Increase" if diff > 0 else "Decrease"
+                meta = PARAMETER_HELP[col]
+                changes.append(f"- **{direction} {meta['label']}** by {abs(diff):.2f} {meta['unit']} (from {orig_val:.2f} to {new_val:.2f})")
+        
+        if changes:
+            report_lines.extend(changes)
+        else:
+            report_lines.append("- No actionable changes required.")
+        report_lines.append("\n")
+        
+    return "\n".join(report_lines)
+
+
 def _render_calculation_page() -> None:
     _inject_styles()
     _render_header()
@@ -327,6 +370,18 @@ def _render_calculation_page() -> None:
                 _, delta_styler = build_counterfactual_delta_styler(query_instance, cfs)
                 st.dataframe(delta_styler, width="stretch")
 
+                report_text = _generate_report(query_instance, cfs, prediction)
+                st.session_state['last_report_text'] = report_text
+                
+                st.subheader(
+                    "Detailed English Report",
+                    help="A plain-English explanation of the required changes for each path."
+                )
+                with st.expander("View Text Report"):
+                    st.markdown(report_text)
+                
+                st.success("Scroll down to the bottom of the page to download the PDF report featuring AI insights and graphs!")
+
     st.divider()
     st.subheader(
         "Model Context (SHAP)",
@@ -338,7 +393,7 @@ def _render_calculation_page() -> None:
     
     st.markdown("##### ❖ Feature Importance (SHAP Summary)")
     st.caption("Ranks features by average impact on predictions. Longer bars indicate features that have the most influence on the final predicted price.")
-    st.pyplot(shap_summary_fig, clear_figure=True)
+    st.pyplot(shap_summary_fig, clear_figure=False)
 
     dep_col1, dep_col2 = st.columns(2)
 
@@ -347,14 +402,35 @@ def _render_calculation_page() -> None:
         st.caption("X-axis: Feature value, Y-axis: SHAP value (impact on final price). Upward trends mean higher income leads to higher predicted prices.")
         with st.spinner("Computing SHAP dependence for MedInc..."):
             dep_fig_1 = create_shap_dependence_plot(model, dataset[FEATURE_COLUMNS], "MedInc")
-        st.pyplot(dep_fig_1, clear_figure=True)
+        st.pyplot(dep_fig_1, clear_figure=False)
 
     with dep_col2:
         st.markdown("##### ❖ Average Occupancy Dependence")
         st.caption("X-axis: Feature value, Y-axis: SHAP value (impact on final price). Shows how household density influences expected price.")
         with st.spinner("Computing SHAP dependence for AveOccup..."):
             dep_fig_2 = create_shap_dependence_plot(model, dataset[FEATURE_COLUMNS], "AveOccup")
-        st.pyplot(dep_fig_2, clear_figure=True)
+        st.pyplot(dep_fig_2, clear_figure=False)
+
+    if 'last_report_text' in st.session_state:
+        st.divider()
+        st.subheader("Export Your Counterfactual AI Report")
+        with st.spinner("Generating PDF Document with figures..."):
+            from src.pdf import create_pdf_report
+            pdf_bytes = create_pdf_report(
+                st.session_state['last_report_text'], 
+                shap_summary_fig, 
+                dep_fig_1, 
+                dep_fig_2
+            )
+            
+            st.download_button(
+                label="Download Full PDF Report",
+                data=pdf_bytes,
+                file_name="cfx_report.pdf",
+                mime="application/pdf",
+                type="primary",
+                use_container_width=True
+            )
 
 
 def main() -> None:
