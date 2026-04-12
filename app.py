@@ -12,7 +12,14 @@ from src.visualise import (
     build_counterfactual_delta_styler,
     create_shap_dependence_plot,
     create_shap_summary_plot,
+    create_correlation_heatmap,
+    create_distribution_plot,
+    create_geospatial_plot,
+    create_actual_vs_predicted_plot,
+    create_residuals_plot,
+    create_feature_importance_plot
 )
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
 MODEL_PATH = Path("outputs/lgbm_model.pkl")
 LOGO_PATH = Path("assets/logo.svg")
@@ -124,7 +131,7 @@ def _render_header() -> None:
     logo_col, title_col = st.columns([1, 6])
     with logo_col:
         if LOGO_PATH.exists():
-            st.image(str(LOGO_PATH), width=88)
+            st.image(str(LOGO_PATH), use_container_width=True)
     with title_col:
         st.title("CFX - Counterfactual Explainer")
         st.caption("Understand predictions, then discover realistic pathways to target prices.")
@@ -133,42 +140,64 @@ def _render_header() -> None:
 def _render_home_page() -> None:
     _inject_styles()
     _render_header()
-    st.markdown(
-        """
-        <div class="hero">
-            <h3 style="margin-top:0; margin-bottom:0.4rem;">Why CFX</h3>
-            <p style="margin:0; opacity:0.95;">
-                CFX explains how to move a house price prediction toward your goal using counterfactual reasoning.
-                Instead of only returning a number, it gives multiple actionable what-if paths.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    
+    st.markdown("---")
+    st.markdown("## Dataset Understanding & Model Overview")
+    st.markdown("Explore the underlying California Housing dataset and feature behaviors before moving to prediction.")
+    
+    df = get_dataset()
+    model = get_model()
 
-    highlight_cols = st.columns(3)
-    with highlight_cols[0]:
-        st.info("⌖ **Predict** with LightGBM on California Housing.")
-    with highlight_cols[1]:
-        st.info("❖ **Explain** with diverse counterfactual paths.")
-    with highlight_cols[2]:
-        st.info("⛭ **Constrain** changes for realistic recommendations.")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("Data Redundancy (Correlation Heatmap)")
+        st.markdown("Understand how features correlate with each other and the target price.")
+        st.pyplot(create_correlation_heatmap(df))
+    with col2:
+        st.subheader("Geospatial Distribution")
+        st.markdown("House prices mapped to Latitude and Longitude.")
+        st.pyplot(create_geospatial_plot(df))
 
-    st.markdown("### ❖ How It Works")
-    st.markdown(
-        "1. Enter the property features in the calculation phase.\n"
-        "2. Review the model's predicted house price instantly.\n"
-        "3. Choose your desired target range.\n"
-        "4. Generate three counterfactual paths and compare feature deltas."
-    )
+    st.markdown("---")
+    st.subheader("Feature Distributions")
+    feat_cols = st.columns(3)
+    for i, feature in enumerate(["MedInc", "HouseAge", "AveRooms"]):
+        with feat_cols[i % 3]:
+            st.pyplot(create_distribution_plot(df, feature))
 
-    st.markdown("### ❖ What You Will See In Calculation Phase")
-    st.markdown(
-        "- Prediction metric in USD.\n"
-        "- Original instance table and three counterfactual paths.\n"
-        "- Color-coded feature deltas (increase/decrease).\n"
-        "- SHAP feature-importance context for model transparency."
-    )
+    st.markdown("---")
+    st.markdown("## Model Performance Diagnostic")
+    st.markdown("Deep dive into LightGBM predictive performance against actual California Housing prices.")
+    
+    # Calculate predictions on a sample to populate model performance metrics
+    df_sample = df.sample(1000, random_state=42)
+    X_sample = df_sample[FEATURE_COLUMNS]
+    y_true = df_sample[TARGET_COLUMN]
+    y_pred = model.predict(X_sample)
+    
+    # Render High-level Metrics (Similar to the dashboard header)
+    met_col1, met_col2, met_col3 = st.columns(3)
+    
+    # Calculate RMSE using a cross-version compatible method (squared=False was removed in sklearn 1.4)
+    import numpy as np
+    rmse = np.sqrt(mean_squared_error(y_true, y_pred))
+    mae = mean_absolute_error(y_true, y_pred)
+    r2 = r2_score(y_true, y_pred)
+    
+    met_col1.metric("Root Mean Squared Error (RMSE)", f"{rmse:.4f}")
+    met_col2.metric("Mean Absolute Error (MAE)", f"{mae:.4f}")
+    met_col3.metric("R² Score", f"{r2:.4f}")
+
+    # Render Visual Performance Diagnostics (Actual vs Predicted, Residuals, Native Feat Importance)
+    perf_col1, perf_col2, perf_col3 = st.columns(3)
+    with perf_col1:
+        st.pyplot(create_actual_vs_predicted_plot(y_true, y_pred))
+    with perf_col2:
+        st.pyplot(create_residuals_plot(y_true, y_pred))
+    with perf_col3:
+        st.pyplot(create_feature_importance_plot(model))
+
+    st.markdown("---")
 
     if st.button("Go To Calculation Phase", type="primary", use_container_width=True):
         st.session_state["page"] = "calculator"
@@ -179,15 +208,14 @@ def _render_feature_inputs(feature_bounds: dict) -> dict:
     user_input = {}
     st.subheader("Property Characteristics & Location")
     
-    col_left, col_right = st.columns(2)
-
-    for index, feature in enumerate(FEATURE_COLUMNS):
+    # Define primary and secondary groups
+    group_1_features = ["MedInc", "HouseAge", "AveRooms", "Latitude", "Longitude"]
+    group_2_features = ["AveBedrms", "Population", "AveOccup"]
+    
+    def render_slider(feature: str, target_col):
         min_val, max_val, default_val = feature_bounds[feature]
-        target_col = col_left if index % 2 == 0 else col_right
         meta = PARAMETER_HELP[feature]
 
-        # Use Streamlit's native 'help' parameter for clean tooltips 
-        # instead of custom HTML and popovers that break layout.
         help_text = (
             f"**{meta['description']}**\n\n"
             f"❖ **Unit:** {meta['unit']}\n\n"
@@ -217,6 +245,19 @@ def _render_feature_inputs(feature_bounds: dict) -> dict:
                     key=f"slider_{feature}",
                     help=help_text
                 )
+
+    # 1. Render primary features cleanly in the main block
+    col_left, col_right = st.columns(2)
+    for index, feature in enumerate(group_1_features):
+        target_col = col_left if index % 2 == 0 else col_right
+        render_slider(feature, target_col)
+
+    # 2. Render redundant/correlated features tucked away inside an expander
+    with st.expander("Advanced / Correlated Features", expanded=False):
+        exp_col_left, exp_col_right = st.columns(2)
+        for index, feature in enumerate(group_2_features):
+            target_col = exp_col_left if index % 2 == 0 else exp_col_right
+            render_slider(feature, target_col)
 
     return user_input
 

@@ -19,12 +19,17 @@ FEATURE_COLUMNS = [
 TARGET_COLUMN = "MedHouseVal"
 
 
-def load_california_housing_df() -> pd.DataFrame:
+def load_california_housing_df(drop_redundant: bool = True) -> pd.DataFrame:
     """Load California Housing dataset as a single DataFrame with target column."""
     housing = fetch_california_housing(as_frame=True)
     frame = housing.frame.copy()
     if TARGET_COLUMN not in frame.columns:
         frame[TARGET_COLUMN] = housing.target
+        
+    if drop_redundant:
+        # Eliminate data redundancy (duplicate rows)
+        frame = frame.drop_duplicates().reset_index(drop=True)
+        
     return frame
 
 

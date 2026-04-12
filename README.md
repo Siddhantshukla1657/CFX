@@ -24,12 +24,13 @@ By leveraging **LightGBM** for high-accuracy predictions and **DiCE (Diverse Cou
 
 ## Key Features
 
+- **Dataset Understanding:** Visual exploration of the California Housing dataset right on the landing page, highlighting data distributions, geospatial prices, and an interactive data redundancy (correlation) heatmap.
+- **Categorized Inputs:** Clean and user-friendly Input UI that logically separates primary geographic/architectural attributes from advanced, highly-correlated constraints.
 - **Interactive Predictor:** Real-time house price estimation using an optimized LightGBM model.
 - **Actionable Counterfactuals:** Generates 3 distinct feature adjustment paths to reach your desired price range.
-- **PDF Report Export:** Downloadable, fully-formatted PDF reports detailing English explanations of the counterfactual changes along with embedded SHAP charts.
+- **Interpretable AI (SHAP):** Visualizes global feature importance and variable dependencies using SHAP (SHapley Additive exPlanations) directly on both landing and calculator phases.
 - **Realistic Constraints:** Geographic features (Latitude/Longitude) are completely locked. The app only recommends changes you can actually influence (like occupancy or renovations).
-- **Interpretable AI (SHAP):** Visualizes feature importance and interaction dependencies using SHAP (SHapley Additive exPlanations).
-- **Modern Dark UI:** A beautifully customized, two-phase Streamlit interface with a hero landing page, clear UI layout, and detailed information popovers.
+- **Modern UI:** A customized, two-phase Streamlit experience leveraging advanced caching (`@st.cache_data`) for fluid user interactions.
 
 ---
 
@@ -41,8 +42,7 @@ By leveraging **LightGBM** for high-accuracy predictions and **DiCE (Diverse Cou
 | **Machine Learning** | LightGBM, scikit-learn |
 | **Explainable AI** | DiCE (`dice-ml`), SHAP |
 | **Data Processing** | Pandas, Numpy |
-| **Data Visualization** | Matplotlib |
-| **PDF Generation** | `fpdf2` |
+| **Data Visualization** | Matplotlib, Seaborn |
 
 ---
 
