@@ -109,17 +109,97 @@ def _inject_styles() -> None:
     st.markdown(
         """
         <style>
-        .hero {
-            border: 1px solid rgba(137, 175, 255, 0.18);
-            border-radius: 12px;
-            padding: 1.5rem 1.3rem;
-            background: rgba(9, 18, 37, 0.4);
-            margin-bottom: 1.5rem;
-            border-left: 4px solid #4a90e2;
+        /* Main background and base text */
+        [data-testid="stAppViewContainer"] {
+            background-color: #000000;
+            color: #ffffff !important;
         }
+        [data-testid="stHeader"] {
+            background-color: rgba(0,0,0,0);
+        }
+        
+        /* Force all text elements to be white */
+        p, span, label, li, .stMarkdown, .stCaption {
+            color: #ffffff !important;
+        }
+
+        /* Hero and sections */
+        .hero {
+            border: 1px solid rgba(137, 175, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            background: linear-gradient(135deg, rgba(20, 20, 25, 0.8) 0%, rgba(10, 10, 15, 0.8) 100%);
+            margin-bottom: 2rem;
+            border-left: 5px solid #4a90e2;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            backdrop-filter: blur(4px);
+        }
+
+        /* Metrics styling */
         [data-testid="stMetricValue"] {
             color: #4a90e2 !important;
-            font-size: 2.2rem !important;
+            font-size: 2.5rem !important;
+            font-weight: 700 !important;
+            text-shadow: 0 0 10px rgba(74, 144, 226, 0.3);
+        }
+        [data-testid="stMetricLabel"] {
+            color: #ffffff !important;
+            font-weight: 600 !important;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Dataframe styling - make text white inside tables */
+        [data-testid="stDataFrame"] div[data-testid="stTable"] td {
+            color: white !important;
+        }
+        
+        /* Buttons */
+        .stButton button {
+            background: linear-gradient(90deg, #4a90e2 0%, #357abd 100%);
+            color: white !important;
+            border: none;
+            border-radius: 8px;
+            padding: 0.6rem 1.2rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .stButton button:hover {
+            box-shadow: 0 0 15px rgba(74, 144, 226, 0.5);
+            transform: translateY(-2px);
+        }
+
+        /* Sliders */
+        .stSlider label {
+            color: #ffffff !important;
+            font-weight: 500 !important;
+        }
+
+        /* Dividers */
+        hr {
+            border-color: rgba(255, 255, 255, 0.2) !important;
+        }
+
+        /* Titles and headers */
+        h1, h2, h3, h4, h5, h6 {
+            color: #ffffff !important;
+            letter-spacing: -0.02em;
+            font-weight: 700 !important;
+        }
+        
+        /* Expander */
+        .streamlit-expanderHeader {
+            background-color: rgba(30, 30, 35, 0.7) !important;
+            border-radius: 8px !important;
+            color: white !important;
+        }
+        
+        /* Sidebar if used */
+        [data-testid="stSidebar"] {
+            background-color: #050505;
+        }
+        [data-testid="stSidebar"] * {
+            color: white !important;
         }
         </style>
         """,

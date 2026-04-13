@@ -18,7 +18,34 @@
 
 **CFX** is an interactive, end-to-end Explainable AI application built for the California Housing dataset. Instead of just guessing a house's value, CFX tells you *how to change it*. 
 
+---
+
+### Project Documentation
+- **[Product Requirements Document (PRD)](prd.md)**: Detailed scope, features, and success metrics.
+- **[Deep Study & Architecture](deep_study.md)**: technical deep-dive into the ML choices, LightGBM tuning, and DiCE configuration.
+
+---
+
 By leveraging **LightGBM** for high-accuracy predictions and **DiCE (Diverse Counterfactual Explanations)**, CFX generates realistic, actionable "what-if" paths to reach a target property price.
+
+---
+
+## Visual Showcase
+
+### Premium Dark Theme
+CFX features a custom-built, premium dark UI designed for clarity and visual impact.
+
+| Home Page - Overview | Calculation Phase - Interactive Inputs |
+| :---: | :---: |
+| ![Home Top](screenshots/1_home_top.png) | ![Calc Phase](screenshots/white_text_calc_phase.png) |
+
+| Model Performance Diagnostics | Counterfactual Result Tables |
+| :---: | :---: |
+| ![Performance](screenshots/3_home_performance.png) | ![Results](screenshots/5_calc_results_tables.png) |
+
+| Feature Distributions | SHAP Explainability |
+| :---: | :---: |
+| ![Distributions](screenshots/2_home_distributions.png) | ![SHAP](screenshots/6_calc_results_shap.png) |
 
 ---
 
