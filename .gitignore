@@ -9,10 +9,6 @@ venv/
 env/
 ENV/
 
-# Application Outputs / Model Artifacts
-outputs/
-*.pkl
-
 # VS Code specific
 .vscode/
 *.code-workspace
